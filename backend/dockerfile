@@ -1,0 +1,32 @@
+# Imagen base
+FROM php:8.2-cli
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    git unzip libpq-dev && \
+    docker-php-ext-install pdo pdo_mysql
+
+# Instalar Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Establecer la variable para permitir el uso de Composer como root
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
+# Crear y establecer el directorio de trabajo
+WORKDIR /app
+
+# Copiar los archivos de tu proyecto
+COPY . .
+
+# Instalar dependencias de Composer
+RUN composer install --no-interaction --no-progress --optimize-autoloader
+
+# Actualizar dependencias si es necesario (opcional)
+# Puedes comentar esta línea si no quieres actualizar en cada build.
+RUN composer update --no-interaction --no-progress
+
+# Exponer el puerto de la aplicación
+EXPOSE 8000
+
+# Comando de inicio del servidor PHP
+CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]
